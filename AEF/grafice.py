@@ -9,18 +9,15 @@ def corelograma(matrice=None, dec=1, titlu='Corelograma', valMin=-1, valMax=1):
     plt.title(titlu, fontsize=14, color='k', verticalalignment='bottom')
     sb.heatmap(data=np.round(matrice, dec), cmap='bwr', vmin=valMin, vmax=valMax, annot=True)
 
-
 # creates the graphical table based on the intensity of link between
 # values on X and Y axes
-def harta_intensitate(matrice=None, dec=1, titlu='Harta intensitate lagatura',
+def harta_intensitate(matrice=None, dec=1, titlu='Harta intensitate legatura',
                   valmin=None, valmax=None,):
     plt.figure(titlu, figsize=(15, 11))
     plt.title(titlu, fontsize=16, color='k', verticalalignment='bottom')
     sb.heatmap(data=np.round(matrice, dec), vmin=valmin, vmax=valmax,
-                # cmap = 'Oranges', annot = True)
-               cmap='Purples', annot=True)
+                cmap = 'Oranges', annot = True)
                 # cmap = 'Blues', annot = True)
-
 
 def cerculCorelatiilor(matrice=None, X1=0, X2=1, raza=1, dec=2, titlu='Cercul corelatiilor',
                        valMin=-1, valMax=1, etichetaX=None, etichetaY=None):
@@ -64,9 +61,8 @@ def cerculCorelatiilor(matrice=None, X1=0, X2=1, raza=1, dec=2, titlu='Cercul co
             #            str(np.round(matrice.iloc[i, X2], dec)) + ')')
             plt.text(x=matrice.iloc[i, X1], y=matrice.iloc[i, X2], s=matrice.index[i])
 
-
 def componentePrincipale(valoriProprii=None, titlu='Varianta explicata de componentele pricipale',
-                         etichetaX='Componente principale', etichetaY='Valori proprii'):
+                         etichetaX='Componente principale', etichetaY='Varianta explicata - valori proprii'):
     plt.figure(titlu, figsize=(11, 8))
     plt.title(titlu, fontsize=14, color='k', verticalalignment='bottom')
     plt.xlabel(xlabel=etichetaX, fontsize=14, color='b', verticalalignment='top')
@@ -74,7 +70,6 @@ def componentePrincipale(valoriProprii=None, titlu='Varianta explicata de compon
     componente = ['C'+str(i+1) for i in range(len(valoriProprii))]
     plt.axhline(y=1, color='r')
     plt.plot(componente, valoriProprii, 'bo-')
-
 
 def norPuncte(matrice=None, titlu='Grafic nor de puncte', etichetaX='Variabile',
               etichetaY='Observatii'):
@@ -84,8 +79,6 @@ def norPuncte(matrice=None, titlu='Grafic nor de puncte', etichetaX='Variabile',
     plt.ylabel(ylabel=etichetaY, fontsize=14, color='k', verticalalignment='bottom')
 
     plt.scatter(x=matrice.iloc[:, 0].values, y=matrice.index[:])
-
-
 
 def afisare():
     plt.show()
