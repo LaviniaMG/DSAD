@@ -25,7 +25,7 @@ PATH_FOR_FILES.mkdir(parents=True, exist_ok=True)
 for entry in data:
     data[entry] = np.where(np.isnan(data[entry]), np.nanmean(data[entry]), data[entry])
 
-
+###################################################Intelegerea setului de date########################################################
 # creare lista etichete observatii
 numeObs = data.index.values
 print(numeObs, type(numeObs))
@@ -44,7 +44,7 @@ print(n)
 # extragere matrice observatii-variabile cauzale
 X = data[numeVar].values
 print(X, X.shape, type(X))
-
+#############################################Matricea standardizata si matricea de covarianta######################################################
 # standardizare matrice variabile cauzale
 X_std = f.standardizare(X)
 print(X_std.shape, type(X_std))
@@ -54,11 +54,14 @@ X_std_df = pd.DataFrame(data=X_std,
                         index=numeObs,
                         columns=numeVar)
 print(X_std_df)
-X_std_df.to_csv('../dataOUT/ACP/Files/Xstd.csv')
-# #  e la fel ca mai sus :Scalarea datelor pentru a avea o medie de 0 și o deviație standard de 1
-# scaled_data = StandardScaler().fit_transform(data)
+X_std_df.to_csv('../dataOUT/ACP/Files/matricea_standardizata.csv')
 
+#Calculul matricei de covarianta
+cov_matrix = np.cov(X_std, rowvar=False)
+cov_df = pd.DataFrame(data=cov_matrix, columns=numeVar, index=numeVar)
+cov_df.to_csv('../dataOUT/ACP/Files/matricea_covarianta.csv')
 
+#############################################################Variata explicata de componente#################################################################
 # Calcularea variației explicate pentru un număr variabil de componente
 var_ratios = []
 for i in range(1, len(numeVar)):
@@ -76,20 +79,32 @@ plt.ylabel('Rata de variație explicată')
 plt.title('Rata de variație explicată în funcție de numărul de componente')
 plt.savefig(PATH_FOR_PLOTS / 'varianța_explicată_de_nr_componentelor.png')
 
+# Graficul Scree cu "cotul" evidentiat
+plt.figure()
+plt.plot(range(1, len((numeVar)) ), np.cumsum(pca.explained_variance_ratio_), marker='o')
+plt.title('Grafic Scree')
+plt.xlabel('Numărul de componente')
+plt.ylabel('Varianța cumulativă explicată')
+plt.axhline(y=0.95, color='r', linestyle='--')
+plt.axvline(x=pca.n_components, color='r', linestyle='--')
+plt.grid()
+plt.savefig(PATH_FOR_PLOTS / 'scree_plot.png')
+
 # Aplicarea PCA pe datele scalate pentru a obține componentele principale
 pca = PCA(n_components=len(numeVar))
 pca.fit_transform(X_std)
-
-# Extracția valorilor proprii (alpha)
-alpha = pca.explained_variance_
-print(alpha)
-# creare grafic varianta explicata
-g.componentePrincipale(valoriProprii=alpha)
-# g.afisare()
+########################################################Componentele principale#################################################################
+# extragere componente principale
+compPrin = pca.components_
+componente = ['C'+str(j+1) for j in range(compPrin.shape[1])]
+compPrin_df = pd.DataFrame(data=compPrin, columns=componente,index=numeVar)
+# salvare in fisier CSV
+compPrin_df.to_csv('../dataOUT/ACP/Files/componentele_principale.csv')
+##
 
 # Vizualizarea varianței explicată de fiecare componentă principală individuală
 plt.figure()
-plt.ylim(-0.5, 4)
+plt.ylim(-0.5, 20)
 plt.tick_params(axis='x', labelsize=6)
 plt.plot([f'C{i+1}' for i in range(len(pca.explained_variance_))], pca.explained_variance_, 'bo-')
 plt.grid()
@@ -99,63 +114,31 @@ plt.title('Varianța explicată de componentele principale')
 plt.axhline(y=1, color='r', linestyle='-')  # Linie orizontală la valoarea proprie de 1
 plt.savefig(PATH_FOR_PLOTS / 'varianța_explicată_de_componentele_principale.png')
 
-##SAU
-# extragere componente principale
-compPrin = pca.components_
-componente = ['C'+str(j+1) for j in range(compPrin.shape[1])]
-compPrin_df = pd.DataFrame(data=compPrin)
-# salvare in fisier CSV
-compPrin_df.to_csv('../dataOUT/ACP/Files/CompPrin.csv')
+#SAU
+# Extracția valorilor proprii (alpha)
+alpha = pca.explained_variance_
+print(alpha)
+# creare grafic varianta explicata
+g.componentePrincipale(valoriProprii=alpha)
+plt.savefig(PATH_FOR_PLOTS /'grafic_variante_explicate.png')
 ##
 
+##############################################################Factori loadings########################################################################
 # Salvarea factorilor de corelatie (loadings) într-un fișier CSV
 PC_df = pd.DataFrame(pca.components_, columns=[f'C{i+1}' for i in range(len(pca.components_))], index=numeVar)
 PC_df.to_csv(PATH_FOR_FILES / 'factori_de_corelatie.csv', index_label='Factor de risc')
 
-# Crearea și salvarea unei corelograme pentru factorii de corelatie
-plt.figure(figsize=(29,29))
-plt.title('Corelograma factorilor de corelatie', fontsize=40, color='k', verticalalignment='bottom')
-sb.heatmap(data=PC_df, cmap='bwr', vmin=-1, vmax=1, annot=True)
-plt.savefig(PATH_FOR_PLOTS / 'corelograma_factorilor_de_corelatie.png')
-
-##SAU
 # extragere factori de corelatie (factor loadings) si salvare
 Rxc = pca.components_
 Rxc_df = pd.DataFrame(data=Rxc, index=numeVar, columns=componente)
 g.corelograma(matrice=Rxc_df, titlu='Corelograma factorilor de corelatie')
-#g.afisare()
+plt.savefig(PATH_FOR_PLOTS/ 'corelograma_factorilor_de_corelatie.png')
 ##
-
+##############################################################Scorurile#######################################################################
 # Salvarea scorurilor componentelor principale (proiecții ale datelor în spațiul PCA) într-un fișier CSV
 scores = pca.transform(X_std)
 scores_df = pd.DataFrame(scores, columns=[f'C{i+1}' for i in range(len(scores[0]))], index=data.index)
 scores_df.to_csv(PATH_FOR_FILES / 'scoruri_în_noul_spațiu.csv', index_label='Țară/Regiuine')
-
-
-
-# Calcularea și salvarea calității reprezentării observațiilor într-un fișier CSV
-quality_df = pd.DataFrame(np.square(scores), columns=[f'C{i+1}' for i in range(len(scores[0]))], index=data.index)
-quality_df = quality_df.div(quality_df.sum(axis=1), axis=0)
-quality_df.to_csv(PATH_FOR_FILES / 'calitatea_reprezentării_observațiilor.csv', index_label='Țară/Regiuine')
-
-
-# Calcularea și salvarea contribuțiilor observațiilor la fiecare componentă într-un fișier CSV
-contrib_df = pd.DataFrame(np.square(scores), columns=[f'C{i+1}' for i in range(len(scores[0]))], index=data.index)
-contrib_df = contrib_df.div(contrib_df.sum(axis=0), axis=1)
-contrib_df.to_csv(PATH_FOR_FILES / 'contribuțiile_observațiilor.csv', index_label='Țară/Regiuine')
-
-
-# Calcularea și salvarea comunălităților (suma pătratelor factorilor de sarcină pentru fiecare variabilă) într-un fișier CSV
-comm_df = pd.DataFrame(np.cumsum(np.square(pca.components_), axis=1), columns=[f'C{i+1}' for i in range(len(scores[0]))], index= numeVar)
-comm_df.to_csv(PATH_FOR_FILES / 'comunalități.csv', index_label='Factor de risc')
-
-##SAU
-# extragere comunalitati
-comun = np.cumsum(np.square(pca.components_), axis=1)
-comun_df = pd.DataFrame(data=comun, index=numeVar, columns=componente)
-g.harta_intensitate(matrice=comun_df, titlu='Harta comunalitatilor')
-#g.afisare()
-##
 
 # Crearea și salvarea unei corelograme pentru scorurile componentelor principale
 plt.figure(figsize=(50, 50))
@@ -164,17 +147,30 @@ plt.ylabel('Țară/Regiune', fontsize=40, color='b', verticalalignment='bottom')
 sb.heatmap(data=scores_df, cmap='bwr', vmin=-1, vmax=1, annot=True)
 plt.savefig(PATH_FOR_PLOTS / 'corelograma_scorurilor.png')
 
-# Graficul Scree cu "cotul" evidentiat
-plt.figure()
-plt.plot(range(1, len((numeVar)) + 1), np.cumsum(pca.explained_variance_ratio_), marker='o')
-plt.title('Grafic Scree')
-plt.xlabel('Numărul de componente')
-plt.ylabel('Varianța cumulativă explicată')
-plt.axhline(y=0.95, color='r', linestyle='--')
-plt.axvline(x=pca.n_components, color='r', linestyle='--')
-plt.grid()
-plt.savefig(PATH_FOR_PLOTS / 'scree_plot.png')
 
+##############################################################Calitatea reprezentarii#######################################################################
+# Calcularea și salvarea calității reprezentării observațiilor într-un fișier CSV
+quality_df = pd.DataFrame(np.square(scores), columns=[f'C{i+1}' for i in range(len(scores[0]))], index=data.index)
+quality_df = quality_df.div(quality_df.sum(axis=1), axis=0)
+quality_df.to_csv(PATH_FOR_FILES / 'calitatea_reprezentării_observațiilor.csv', index_label='Țară/Regiuine')
+
+
+##############################################################Contributiile#######################################################################
+# Calcularea și salvarea contribuțiilor observațiilor la fiecare componentă într-un fișier CSV
+contrib_df = pd.DataFrame(np.square(scores), columns=[f'C{i+1}' for i in range(len(scores[0]))], index=data.index)
+contrib_df = contrib_df.div(contrib_df.sum(axis=0), axis=1)
+contrib_df.to_csv(PATH_FOR_FILES / 'contribuțiile_observațiilor.csv', index_label='Țară/Regiuine')
+
+
+##############################################################Harta comunalitatilor#######################################################################
+# extragere comunalitati
+comun = np.cumsum(np.square(pca.components_), axis=1)
+comun_df = pd.DataFrame(data=comun, index=numeVar, columns=componente)
+g.harta_intensitate(matrice=comun_df, titlu='Harta comunalitatilor')
+plt.savefig(PATH_FOR_PLOTS/'harta_comunalitatilor.png')
+##
+
+###############################################################################################################################################
 def biplot(score, coeff, labels=None):
     xs = score[:, 0]
     ys = score[:, 1]
