@@ -4,13 +4,14 @@ import pandas as pd
 #import utile as utl
 import AEF as aef
 import ACP as acp
-import factor_analyzer as fa
+#import factor_analyzer as fa
 import grafice as g
 from sklearn.preprocessing import StandardScaler
 
 
-tabel = pd.read_csv('dataIN/AgroFood_CO2_emissions.csv', index_col=0, na_values=':', encoding='latin1')
+tabel = pd.read_csv('../dataIN/AgroFood_CO2_emissions.csv', index_col=0, na_values=':', encoding='latin1')
 print(tabel)
+tabel = tabel.drop(['Year'], axis=1)
 
 obsNume = tabel.index.values
 varNume = tabel.columns.values
@@ -25,7 +26,7 @@ X.fillna(X.mean(), inplace=True)
 # inlocuire celule NAN
 #X = utl.inlocuireNAN(matrice_numerica)
 X_df = pd.DataFrame(data=X, index=obsNume, columns=varNume)
-X_df.to_csv('./dataOUTAEF/X.csv')
+X_df.to_csv('../dataOUT/AEF/Files/X.csv')
 
 # verificare test de sfericitate Barlett
 sfericitateBartlett = fa.calculate_bartlett_sphericity(X_df)
@@ -52,7 +53,7 @@ matrice = vector[:, np.newaxis]
 print(matrice)
 matrice_df = pd.DataFrame(data=matrice, index=varNume,
                           columns=['Indici KMO'])
-matrice_df.to_csv('./dataOUTAEF/KMO.csv')
+matrice_df.to_csv('./dataOUT/AEF/Files/KMO.csv')
 g.harta_intensitate(matrice=matrice_df, titlu='Indicii KMO')
 # g.afisare()
 
@@ -100,7 +101,7 @@ factori = ['F'+str(j+1) for j in range(nrFactoriSemnificativi)]
 factorLoadingsFA_df = pd.DataFrame(data=factorLoadingsFA,
                                    index=varNume, columns=factori)
 # salvare factor loadings in fisier CSV
-factorLoadingsFA_df.to_csv('./dataOUTAEF/FactorLoadingsFA.csv')
+factorLoadingsFA_df.to_csv('./dataOUT/AEF/Files/FactorLoadingsFA.csv')
 g.corelograma(matrice=factorLoadingsFA_df, titlu='Corelegrama factorilor de corelatie din FA')
 #g.afisare()
 
@@ -119,7 +120,6 @@ factorLoadingsACP_df = pd.DataFrame(data=factorLoadingsACP,
                                     index=varNume,
                                     columns=componente)
 # salvare in fisier CSV
-# TODO
 g.corelograma(matrice=factorLoadingsACP_df, titlu='Corelograma factorilor de corelatie din ACP')
 #g.afisare()
 
